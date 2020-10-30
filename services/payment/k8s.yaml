@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: srv-payment 
+  name: srv-payment
+  namespace: default 
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: srv-payment
+  template:
+    metadata:
+      labels:
+        app: srv-payment
+    spec:
+      containers:
+      - image: <MY_AWS_ACCOUNT_ID>.dkr.ecr.us-west-2.amazonaws.com/srv-payment:latest
+        name: srv-payment
+        env:
+          - name: NODE_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.hostIP
+          - name: SPLK_TRACE_EXPORTER_URL
+            value: "http://$(NODE_IP):9080/v1/trace"
+          - name: SPLK_SERVICE_NAME
+            value: srv-payment
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: srv-payment
+  labels:
+    app: srv-payment
+spec:
+  ports:
+  - name: http 
+    port: 8003
+  selector:
+    app: srv-payment

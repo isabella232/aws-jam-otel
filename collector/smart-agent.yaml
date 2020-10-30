@@ -1,0 +1,296 @@
+---
+# Source: signalfx-agent/templates/clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: signalfx-agent
+  labels:
+    app: signalfx-agent
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - events
+  - namespaces
+  - namespaces/status
+  - nodes
+  - nodes/spec
+  - nodes/proxy
+  - pods
+  - pods/status
+  - replicationcontrollers
+  - replicationcontrollers/status
+  - services
+  - resourcequotas
+  # Only need to be able to view secrets if using k8s annotation
+  # agent.signalfx.com/configWithSecret.*.  You can also allow specific
+  # secrets for finer-grain permission sets.
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - nodes/stats
+  verbs:
+  - get
+  - list
+  # We need create because kubelet takes a POST for the stat query
+  - create
+- apiGroups:
+  - apps
+  resources:
+  - daemonsets
+  - deployments
+  - replicasets
+  - statefulsets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - extensions
+  resources:
+  - daemonsets
+  - deployments
+  - replicasets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  - cronjobs
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+    - autoscaling
+  resources:
+    - horizontalpodautoscalers
+  verbs:
+    - get
+    - list
+    - watch
+- nonResourceURLs:
+  - '/metrics'
+  verbs:
+  - get
+  - list
+  - watch
+---
+# Source: signalfx-agent/templates/clusterrolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: signalfx-agent
+  labels:
+    app: signalfx-agent
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: signalfx-agent
+subjects:
+- kind: ServiceAccount
+  name: signalfx-agent
+  namespace: default 
+---
+# Source: signalfx-agent/templates/configmap-role.yaml
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: Role
+metadata:
+  name: signalfx-agent
+  namespace: default 
+  labels:
+    app: signalfx-agent
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - update
+  - create
+---
+# Source: signalfx-agent/templates/configmap-rolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: RoleBinding
+metadata:
+  name: signalfx-agent
+  namespace: default
+  labels:
+    app: signalfx-agent
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: signalfx-agent
+subjects:
+- kind: ServiceAccount
+  name: signalfx-agent
+  namespace: default
+---
+# Source: signalfx-agent/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: signalfx-agent-v5
+  labels:
+    app: signalfx-agent
+data:
+  agent.yaml: |
+    signalFxAccessToken: <MY_APM_TOKEN>
+    signalFxRealm: us1
+    ingestUrl: "http://otel-collector:9943"
+    traceEndpointUrl: "http://otel-collector:7276/v2/trace"
+    writer:
+      traceExportFormat: sapm
+      signalFxEnabled: true
+    disableHostDimensions: false
+    etcPath: /hostfs/etc
+    procPath: /hostfs/proc
+    enableBuiltInFiltering: true
+    intervalSeconds: 10
+    cluster: AWS_EKS
+    logging:
+      level: info
+      format: text
+    globalDimensions:
+      kubernetes_cluster: AWS_EKS
+      environment: <MY_ENVIRONMENT_NAME>
+    globalSpanTags:
+      environment: <MY_ENVIRONMENT_NAME>
+    observers:
+    - type: k8s-api
+      discoverAllPods: false
+      discoverNodes: false
+    monitors:
+    - type: trace-forwarder
+      listenAddress: 0.0.0.0:9080
+    - type: cpu
+    - type: filesystems
+      hostFSPath: /hostfs
+    - type: disk-io
+    - type: net-io
+    - type: load
+    - type: memory
+    - type: host-metadata
+    - type: processlist
+    - type: vmem
+    - type: kubelet-metrics
+      kubeletAPI:
+        authType: serviceAccount
+      usePodsEndpoint: true
+    # Collects k8s cluster-level metrics
+    - type: kubernetes-cluster
+    - type: docker-container-stats
+      dockerURL: unix:///var/run/docker.sock
+      excludedImages:
+       - '*pause-amd64*'
+       - 'k8s.gcr.io/pause*'
+      labelsToDimensions:
+        io.kubernetes.container.name: container_spec_name
+        io.kubernetes.pod.name: kubernetes_pod_name
+        io.kubernetes.pod.uid: kubernetes_pod_uid
+        io.kubernetes.pod.namespace: kubernetes_namespace
+    collectd:
+      readThreads: 5
+      writeQueueLimitHigh: 500000
+      writeQueueLimitLow: 400000
+      timeout: 40
+      logLevel: info
+    metricsToExclude:
+      # The StackDriver metadata-agent pod on GKE restarts every few minutes so
+      # ignore its containers
+      - dimensions:
+          container_spec_name: metadata-agent
+
+---
+# Source: signalfx-agent/templates/daemonset.yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: signalfx-agent
+  labels:
+    app: signalfx-agent
+    version: 5.5.5
+spec:
+  selector:
+    matchLabels:
+      app: signalfx-agent
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate
+
+  template:
+    metadata:
+      labels:
+        app: signalfx-agent
+        version: 5.5.5
+
+      annotations:
+        {}
+    spec:
+      # Use host network so we can access kubelet directly
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      restartPolicy: Always
+      serviceAccountName: signalfx-agent
+
+      nodeSelector:
+        kubernetes.io/os: linux
+      tolerations:
+      - effect: NoSchedule
+        key: node.alpha.kubernetes.io/role
+        operator: Exists
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+        operator: Exists
+
+      containers:
+      - name: signalfx-agent
+        image: "quay.io/signalfx/signalfx-agent:5"
+        imagePullPolicy: IfNotPresent
+        command:
+        - /bin/signalfx-agent
+        volumeMounts:
+        - mountPath: /etc/signalfx
+          name: config
+        - mountPath: /hostfs
+          name: hostfs
+          readOnly: true
+          mountPropagation: HostToContainer
+        - mountPath: /var/run/docker.sock
+          name: docker
+          readOnly: true
+        - mountPath: /etc/passwd
+          name: etc-passwd
+          readOnly: true
+        resources:
+          {}
+      volumes:
+      - name: config
+        configMap:
+          name: signalfx-agent-v5
+      - name: hostfs
+        hostPath:
+          path: /
+      - name: docker
+        hostPath:
+          path: /var/run/docker.sock
+      - name: etc-passwd
+        hostPath:
+          path: /etc/passwd
+---
+# Source: signalfx-agent/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app: signalfx-agent
+  name: signalfx-agent
