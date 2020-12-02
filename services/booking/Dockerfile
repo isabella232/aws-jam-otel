@@ -12,7 +12,7 @@ ENV SPLK_SERVICE_NAME=srv-booking
 
 COPY . /app
 
-RUN ./manage.py migrate
+RUN python manage.py migrate
 
 CMD splk-py-trace ./manage.py runserver 0.0.0.0:8002
 # CMD ./manage.py runserver 0.0.0.0:8002
