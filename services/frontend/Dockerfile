@@ -11,5 +11,5 @@ ENV SPLK_SERVICE_NAME=srv-frontend
 
 COPY . /app
 
-CMD splk-py-trace python main.py
-# CMD python main.py
+# CMD splk-py-trace python main.py
+CMD python main.py

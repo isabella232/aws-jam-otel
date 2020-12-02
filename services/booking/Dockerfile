@@ -14,5 +14,5 @@ COPY . /app
 
 RUN python manage.py migrate
 
-CMD splk-py-trace ./manage.py runserver 0.0.0.0:8002
-# CMD ./manage.py runserver 0.0.0.0:8002
+CMD python manage.py runserver 0.0.0.0:8002
+# CMD splk-py-trace ./manage.py runserver 0.0.0.0:8002

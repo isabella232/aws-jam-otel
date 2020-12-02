@@ -11,7 +11,7 @@ ENV SPLK_SERVICE_NAME=srv-search
 
 COPY . /app
 
-CMD	splk-py-trace flask run --host 0.0.0.0 --port 8001
-# CMD	flask run --host 0.0.0.0 --port 8001
+CMD	flask run --host 0.0.0.0 --port 8001
+# CMD	splk-py-trace flask run --host 0.0.0.0 --port 8001
 
 
