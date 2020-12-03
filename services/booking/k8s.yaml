@@ -16,7 +16,7 @@ spec:
         app: srv-booking
     spec:
       containers:
-      - image: <MY_AWS_ACCOUNT_ID>.dkr.ecr.us-west-2.amazonaws.com/srv-booking:latest
+      - image: MY_AWS_ACCOUNT_ID.dkr.ecr.us-west-2.amazonaws.com/srv-booking:latest
         name: srv-booking
         env:
           - name: NODE_IP

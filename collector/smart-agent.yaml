@@ -143,7 +143,7 @@ metadata:
     app: signalfx-agent
 data:
   agent.yaml: |
-    signalFxAccessToken: <MY_APM_TOKEN>
+    signalFxAccessToken: MY_APM_TOKEN
     signalFxRealm: us1
     ingestUrl: "http://otel-collector:9943"
     traceEndpointUrl: "http://otel-collector:7276/v2/trace"
@@ -161,9 +161,9 @@ data:
       format: text
     globalDimensions:
       kubernetes_cluster: AWS_EKS
-      environment: <MY_ENVIRONMENT_NAME>
+      environment: MY_ENVIRONMENT_NAME
     globalSpanTags:
-      environment: <MY_ENVIRONMENT_NAME>
+      environment: MY_ENVIRONMENT_NAME
     observers:
     - type: k8s-api
       discoverAllPods: false

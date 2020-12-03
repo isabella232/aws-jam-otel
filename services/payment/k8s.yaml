@@ -16,7 +16,7 @@ spec:
         app: srv-payment
     spec:
       containers:
-      - image: <MY_AWS_ACCOUNT_ID>.dkr.ecr.us-west-2.amazonaws.com/srv-payment:latest
+      - image: MY_AWS_ACCOUNT_ID.dkr.ecr.us-west-2.amazonaws.com/srv-payment:latest
         name: srv-payment
         env:
           - name: NODE_IP

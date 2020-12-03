@@ -16,7 +16,7 @@ spec:
         app: srv-frontend
     spec:
       containers:
-      - image: <MY_AWS_ACCOUNT_ID>.dkr.ecr.us-west-2.amazonaws.com/srv-frontend:latest
+      - image: MY_AWS_ACCOUNT_ID.dkr.ecr.us-west-2.amazonaws.com/srv-frontend:latest
         name: srv-frontend
         env:
           - name: NODE_IP

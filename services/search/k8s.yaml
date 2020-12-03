@@ -16,7 +16,7 @@ spec:
         app: srv-search
     spec:
       containers:
-      - image: <MY_AWS_ACCOUNT_ID>.dkr.ecr.us-west-2.amazonaws.com/srv-search:latest
+      - image: MY_AWS_ACCOUNT_ID.dkr.ecr.us-west-2.amazonaws.com/srv-search:latest
         name: srv-search
         env:
           - name: NODE_IP

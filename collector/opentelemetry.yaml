@@ -58,11 +58,11 @@ data:
     exporters:
       # Traces
       sapm:
-        access_token: "<MY_APM_TOKEN>"
+        access_token: "MY_APM_TOKEN"
         endpoint: "https://ingest.us1.signalfx.com/v2/trace"
       # Metrics
       signalfx:
-        access_token: "<MY_APM_TOKEN>"
+        access_token: "MY_APM_TOKEN"
         realm: "us1"
       logging:
           loglevel: debug
