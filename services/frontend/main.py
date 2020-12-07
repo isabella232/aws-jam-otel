@@ -46,12 +46,6 @@ class RoomResource(object):
 # falcon.API instances are callable WSGI apps
 app = falcon.API()
 
-print('-----------')
-import os
-print('exporter url: ', os.environ.get("SPLK_TRACE_EXPORTER_URL"))
-logger.info(os.environ.get("SPLK_TRACE_EXPORTER_URL"))
-print('----------')
-
 app.add_route('/rooms/{room_id:int}/', RoomResource())
 app.add_route('/rooms/{room_id:int}/book', RoomResource())
 
